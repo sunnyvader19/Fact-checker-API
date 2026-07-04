@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Fact Checker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #3b82f6;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-8 transition-all">
+        
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Social Media Fact Checker</h1>
+            <p class="text-gray-500 text-sm">Paste a link from YouTube, X (Twitter), Reddit, or Instagram to verify its claims.</p>
+        </div>
+
+        <!-- Input Section -->
+        <form id="checkForm" class="flex flex-col sm:flex-row gap-3 mb-6">
+            <input 
+                type="url" 
+                id="urlInput" 
+                placeholder="https://www.youtube.com/..." 
+                required
+                class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+            >
+            <button 
+                type="submit" 
+                id="submitBtn"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors flex items-center justify-center gap-2"
+            >
+                Verify
+            </button>
+        </form>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="hidden flex flex-col items-center justify-center py-8">
+            <div class="spinner mb-4"></div>
+            <p class="text-gray-600 font-medium">Analyzing media, extracting text, and verifying facts...</p>
+            <p class="text-gray-400 text-sm mt-1">This may take a moment for videos.</p>
+        </div>
+
+        <!-- Result Section -->
+        <div id="resultState" class="hidden bg-gray-50 rounded-xl p-6 border border-gray-100 mt-4">
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Verdict</h3>
+            <div id="verdictText" class="text-gray-800 whitespace-pre-wrap leading-relaxed text-lg">
+                <!-- Result goes here -->
+            </div>
+            
+            <details class="mt-4 group">
+                <summary class="text-sm text-blue-500 cursor-pointer hover:text-blue-600 font-medium">View Extracted Data</summary>
+                <div class="mt-3 p-4 bg-white rounded border border-gray-200 text-xs text-gray-600 font-mono overflow-auto max-h-48">
+                    <p class="font-bold text-gray-800 mb-1">Caption/Description:</p>
+                    <p id="captionText" class="mb-3 whitespace-pre-wrap">...</p>
+                    <p class="font-bold text-gray-800 mb-1">Audio Transcript:</p>
+                    <p id="transcriptText" class="whitespace-pre-wrap">...</p>
+                </div>
+            </details>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="hidden bg-red-50 text-red-700 rounded-xl p-4 mt-4 border border-red-100 flex items-start gap-3">
+            <svg class="w-6 h-6 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <p id="errorText" class="text-sm font-medium">An error occurred.</p>
+        </div>
+
+    </div>
+
+    <script>
+        document.getElementById('checkForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const urlInput = document.getElementById('urlInput').value;
+            const submitBtn = document.getElementById('submitBtn');
+            const loadingState = document.getElementById('loadingState');
+            const resultState = document.getElementById('resultState');
+            const errorState = document.getElementById('errorState');
+            
+            // Reset UI
+            resultState.classList.add('hidden');
+            errorState.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+
+            try {
+                // Call your local FastAPI backend!
+                const response = await fetch('http://127.0.0.1:8000/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: urlInput })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'An unknown error occurred on the server.');
+                }
+
+                // Populate and show results
+                document.getElementById('verdictText').innerText = data.verdict;
+                document.getElementById('captionText').innerText = data.caption || 'No caption extracted.';
+                document.getElementById('transcriptText').innerText = data.transcript || 'No spoken audio extracted.';
+                
+                loadingState.classList.add('hidden');
+                resultState.classList.remove('hidden');
+
+            } catch (error) {
+                document.getElementById('errorText').innerText = error.message;
+                loadingState.classList.add('hidden');
+                errorState.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+            }
+        });
+    </script>
+</body>
+</html>
