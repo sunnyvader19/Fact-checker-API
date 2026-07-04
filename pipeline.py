@@ -76,7 +76,7 @@ class FactChecker:
 # --- Execution Test ---
 if __name__ == "__main__":
     # REPLACE THIS with your actual API key!
-    GEMINI_API_KEY = "AQ.Ab8RN6LqUbE805bNYBGHbOsX4fJzuoHSEnXfzf1oxd3cdWp9dQ" 
+    GEMINI_API_KEY = "" 
     
     test_url = "https://www.youtube.com/watch?v=sAg07qAM7Xc" 
     
