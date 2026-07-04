@@ -5,6 +5,10 @@ from pydantic import BaseModel
 from faster_whisper import WhisperModel
 from google import genai
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+
+# Load the secret variables from the .env file
+load_dotenv()
 
 # --- 1. Data Models ---
 class VideoRequest(BaseModel):
@@ -113,8 +117,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# REPLACE THIS WITH YOUR ACTUAL API KEY
-GEMINI_API_KEY = "AQ.Ab8RN6LqUbE805bNYBGHbOsX4fJzuoHSEnXfzf1oxd3cdWp9dQ" 
+# Securely load the API key from the environment
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+if not GEMINI_API_KEY:
+    raise ValueError("GEMINI_API_KEY is missing! Please check your .env file.")
 
 # Initialize global engine components
 downloader = VideoDownloader()
