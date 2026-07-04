@@ -1,0 +1,13 @@
+Environments
+
+venv/
+.env
+
+Python caches
+
+pycache/
+*.pyc
+
+Downloaded audio
+
+audio/
